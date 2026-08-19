@@ -557,8 +557,10 @@ window.onload = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const paramUrl = urlParams.get('url');
     if (paramUrl) {
-        document.getElementById('url').value = decodeURIComponent(paramUrl);
-        // Thode se delay ke sath loadVideo call hoga taaki element properly bind ho jaye
+        // decodeURIComponent secure tarike se poori link ko wapas le aayega bina kate
+        const decodedUrl = decodeURIComponent(paramUrl);
+        document.getElementById('url').value = decodedUrl;
+        
         setTimeout(() => {
             loadVideo();
         }, 300);
