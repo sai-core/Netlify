@@ -581,18 +581,32 @@ document.addEventListener('keydown', (e) => {
  if(e.key.toLowerCase() === 'f') { e.preventDefault(); goFull(); }
 });
 
-// 🚀 Auto-capture URL passed from Telegram WebApp query parameter & trigger play
+// 🚀 Auto-capture URL passed from Telegram WebApp query parameter & safely trigger play
 window.onload = () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const paramUrl = urlParams.get('url');
-    if (paramUrl) {
-        // decodeURIComponent secure tarike se poori link ko wapas le aayega bina kate
-        const decodedUrl = decodeURIComponent(paramUrl);
+    const videoUrl = urlParams.get('url');
+    if (videoUrl) {
+        const decodedUrl = decodeURIComponent(videoUrl);
         document.getElementById('url').value = decodedUrl;
         
-        setTimeout(() => {
-            loadVideo();
-        }, 300);
+        // Direct load and attempt play with user-gesture fallback
+        player.src = decodedUrl;
+        player.load();
+        
+        const playPromise = player.play();
+        if (playPromise !== undefined) {
+            playPromise.then(_ => {
+                // Autoplay started successfully!
+                playIcon.innerHTML = pausePath;
+                showControlsInstant();
+            }).catch(error => {
+                // Autoplay was prevented by browser security, show play button state
+                console.log("Autoplay blocked, waiting for user tap.");
+                playIcon.innerHTML = playPath;
+                spinner.style.display = 'none';
+                showToast("Tap screen or play button to start");
+            });
+        }
     }
 };
 
