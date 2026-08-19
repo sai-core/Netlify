@@ -558,9 +558,13 @@ window.onload = () => {
     const paramUrl = urlParams.get('url');
     if (paramUrl) {
         document.getElementById('url').value = decodeURIComponent(paramUrl);
+        // Thode se delay ke sath loadVideo call hoga taaki element properly bind ho jaye
+        setTimeout(() => {
+            loadVideo();
+        }, 300);
     }
-    loadVideo();
 };
+
 </script>
 </body>
 </html>
