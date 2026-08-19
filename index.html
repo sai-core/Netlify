@@ -584,12 +584,18 @@ document.addEventListener('keydown', (e) => {
 // 🚀 Auto-capture URL passed from Telegram WebApp query parameter & trigger play
 window.onload = () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const videoUrl = urlParams.get('url');
-    if (videoUrl) {
-        document.getElementById('url').value = decodeURIComponent(videoUrl);
-        loadVideo();
+    const paramUrl = urlParams.get('url');
+    if (paramUrl) {
+        // decodeURIComponent secure tarike se poori link ko wapas le aayega bina kate
+        const decodedUrl = decodeURIComponent(paramUrl);
+        document.getElementById('url').value = decodedUrl;
+        
+        setTimeout(() => {
+            loadVideo();
+        }, 300);
     }
 };
+
 </script>
 </body>
 </html>
