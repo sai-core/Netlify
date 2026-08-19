@@ -2,819 +2,565 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NETFLY Pro Player</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EDGE PLAYER</title>
 <style>
-@keyframes bgGlowPulseTop {
-  0% { transform: scale(1) translate(0, 0); opacity: 0.18; }
-  50% { transform: scale(1.25) translate(30px, -40px); opacity: 0.28; }
-  100% { transform: scale(1) translate(0, 0); opacity: 0.18; }
+:root {
+    --accent: #ff0516;
+    --accent-glow: rgba(255, 5, 22, 0.5);
+    --bg-dark: #020203;
+    --panel-bg: rgba(15, 15, 18, 0.75);
+    --blur-val: 20px;
 }
 
-@keyframes bgGlowPulseBottom {
-  0% { transform: scale(1) translate(0, 0); opacity: 0.18; }
-  50% { transform: scale(1.3) translate(-40px, 30px); opacity: 0.28; }
-  100% { transform: scale(1) translate(0, 0); opacity: 0.18; }
+/* Scroll blocks to prevent mobile screen cut shifting */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', -apple-system, sans-serif;
 }
 
-@keyframes webSwing {
-  0%, 100% { transform: rotate(-8deg) scale(1); }
-  50% { transform: rotate(8deg) scale(1.08); }
+body {
+    background: var(--bg-dark);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+    overflow-x: hidden; /* Stops horizontal scrolling entirely */
+    position: relative;
+    transition: background 0.4s ease;
 }
 
-@keyframes webPulse {
-  0%, 100% { filter: drop-shadow(0 0 3px rgba(255,0,60,0.5)); }
-  50% { filter: drop-shadow(0 0 10px rgba(255,0,60,0.9)); }
+body.theater-active { background: #000001; }
+
+/* Top Bar is strictly STATIC - No dimming, No camouflage */
+.top-bar-container { 
+    opacity: 1 !important; 
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    width: 100%;
 }
 
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Inter,Arial,sans-serif;
+/* Constrained Responsive Ambilight Canvas */
+#ambilight-canvas {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    max-width: 950px;
+    max-height: 550px;
+    z-index: 1;
+    filter: blur(50px) brightness(1.2) contrast(1.2);
+    pointer-events: none;
+    transform: scale(1.08);
+    opacity: 0;
+    transition: opacity 0.4s ease;
 }
 
-body{
-min-height:100vh;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-padding:20px;
-background:radial-gradient(circle at top,#400010 0%,#151515 45%,#000 100%);
-color:#fff;
-overflow-x:hidden;
-position:relative;
+/* Master Responsive Fluid Wrapper Container */
+.player-container {
+    width: 100%;
+    max-width: 1050px;
+    z-index: 2;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-body::after{
-content:"";
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background-image: radial-gradient(rgba(255, 0, 60, 0.05) 1px, transparent 1px);
-background-size: 30px 30px;
-opacity: 0.4;
-pointer-events:none;
-z-index:0;
+.url-box {
+    flex: 1;
+    display: flex;
+    gap: 10px;
+    background: var(--panel-bg);
+    padding: 6px;
+    border-radius: 14px;
+    backdrop-filter: blur(var(--blur-val));
+    -webkit-backdrop-filter: blur(var(--blur-val));
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+}
+.url-box input {
+    flex: 1;
+    padding: 12px 14px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    outline: none;
+    font-size: 13px;
+    transition: 0.3s;
+    border: 1px solid transparent;
+}
+.url-box input:focus { border-color: rgba(255, 5, 22, 0.3); background: rgba(0, 0, 0, 0.7); }
+.url-box button {
+    padding: 0 18px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: 0.2s;
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+.url-box button:hover { background: #ff2332; transform: translateY(-1px); }
+
+/* Adaptive Premium Glass Ambient Light Switch Box */
+.ambient-toggle-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--panel-bg);
+    padding: 12px 16px;
+    border-radius: 14px;
+    backdrop-filter: blur(var(--blur-val));
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    user-select: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.switch { position: relative; display: inline-block; width: 38px; height: 20px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; inset: 0; background-color: rgba(255,255,255,0.15); transition: .3s; border-radius: 34px; }
+.slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+input:checked + .slider:before { transform: translateX(18px); }
+
+/* Cinema Canvas Aspect Frame */
+.tv-frame {
+    position: relative;
+    border-radius: 16px;
+    background: #000;
+    overflow: hidden;
+    box-shadow: 0 30px 70px rgba(0,0,0,0.9);
+    border: 1px solid rgba(255,255,255,0.04);
+    width: 100%;
+    transition: max-width 0.4s ease;
 }
 
-/* Top Glow */
-body::before{
-content:"";
-position:fixed;
-top:-200px;
-right:-150px;
-width:550px;
-height:550px;
-background:linear-gradient(135deg, #ff003c, #800020);
-filter:blur(180px);
-opacity:.18;
-pointer-events:none;
-z-index:0;
-animation: bgGlowPulseTop 8s ease-in-out infinite;
+/* Dynamic Aspect Ratio Classes */
+.video-wrap { 
+    position: relative; 
+    width: 100%; 
+    background: #000; 
+    transition: aspect-ratio 0.4s ease;
 }
+.video-wrap.landscape { aspect-ratio: 16/9; }
+.video-wrap.portrait { aspect-ratio: 9/16; max-height: 80vh; }
 
-/* Bottom Glow */
-.bottom-glow {
-content:"";
-position:fixed;
-bottom:-200px;
-left:-150px;
-width:550px;
-height:550px;
-background:linear-gradient(135deg, #ff003c, #800020);
-filter:blur(180px);
-opacity:.18;
-pointer-events:none;
-z-index:0;
-animation: bgGlowPulseBottom 9s ease-in-out infinite;
+video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; }
+/* Zoom to Fill configuration */
+video.zoom-fill { object-fit: cover !important; }
+
+iframe { position: absolute; top:0; left:0; width: 100%; height: 100%; border: none; display: none; z-index: 4; }
+
+.interaction-layer { position: absolute; inset: 0; z-index: 5; display: flex; }
+.zone { height: 100%; pointer-events: auto; }
+.side-zone { width: 22%; } 
+.center-zone { width: 56%; }
+
+.spinner-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 6; display: none; }
+.spinner { width: 44px; height: 44px; border: 4px solid rgba(255, 5, 22, 0.1); border-left-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Intelligent Bottom Control Bar Controls overlay Dashboard */
+.controls {
+    position: absolute; left: 0; bottom: 0; width: 100%;
+    padding: 40px 16px 16px 16px;
+    background: linear-gradient(to top, rgba(2,2,3,1) 0%, rgba(2,2,3,0.85) 55%, rgba(2,2,3,0) 100%);
+    transition: opacity 0.15s ease, transform 0.15s ease; z-index: 7;
+    display: flex; flex-direction: column; gap: 10px;
 }
+.hide { opacity: 0; pointer-events: none; transform: translateY(6px); }
 
-.card{
-position:relative;
-z-index:1;
-width:min(950px,100%);
-background:rgba(255,255,255,.06);
-backdrop-filter:blur(25px);
--webkit-backdrop-filter:blur(25px);
-border:1px solid rgba(255,255,255,.1);
-border-radius:30px;
-padding:20px;
-box-shadow:0 20px 60px rgba(0,0,0,.6);
+.progress-container { position: relative; width: 100%; display: flex; align-items: center; cursor: pointer; }
+.seek {
+    -webkit-appearance: none; appearance: none; width: 100%; background: rgba(255, 255, 255, 0.2); height: 4px; border-radius: 4px; outline: none; margin: 0; transition: height 0.1s; position: relative; z-index: 2;
 }
+.progress-container:hover .seek { height: 5px; }
+.seek::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 0px; height: 0px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); transition: 0.1s; }
+.progress-container:hover .seek::-webkit-slider-thumb { width: 10px; height: 10px; }
 
-.header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:20px;
+.row { display: flex; align-items: center; justify-content: space-between; position: relative; width: 100%; }
+.controls-center { display: flex; align-items: center; gap: 16px; position: absolute; left: 50%; transform: translateX(-50%); }
+
+.btn { width: 34px; height: 34px; border: none; border-radius: 50%; background: transparent; color: rgba(255, 255, 255, 0.7); cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+.btn svg { width: 16px; height: 16px; fill: currentColor; }
+.btn:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+#playBtn { background: rgba(255,255,255,0.08); color: #fff; width: 38px; height: 38px; }
+#playBtn:hover { background: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+
+.time { color: rgba(255, 255, 255, 0.5); font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.right-controls-group { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.speed-badge { background: rgba(255,255,255,0.08); color: #ccc; font-size: 10px; font-weight: 600; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+.speed-badge:hover { background: rgba(255,255,255,2); color: #fff; }
+
+.lock-btn {
+    position: absolute; top: 12px; left: 12px; z-index: 8; background: rgba(10,10,12,0.6); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.6); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
+.lock-btn.locked { color: #fff; background: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
 
-.logo-container{
-display:flex;
-align-items:center;
-gap:10px;
+.toast {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); background: rgba(10, 10, 12, 0.85); backdrop-filter: blur(10px); color: #fff; padding: 10px 20px; border-radius: 30px; opacity: 0; transition: all 0.15s; z-index: 9; pointer-events: none; font-weight: 600; font-size: 12px; border: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 6px; box-shadow: 0 20px 40px rgba(0,0,0,0.7);
 }
+.toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 
-.spider-web-logo{
-width:40px;
-height:40px;
-display:flex;
-justify-content:center;
-align-items:center;
-animation: webSwing 3.5s ease-in-out infinite, webPulse 2s ease-in-out infinite;
-transform-origin: top center;
-}
-
-.spider-web-logo svg{
-width:36px;
-height:36px;
-fill: none;
-stroke: #ff003c;
-stroke-width: 1.8;
-stroke-linecap: round;
-stroke-linejoin: round;
-}
-
-.logo{
-font-size:28px;
-font-weight:900;
-letter-spacing:2px;
-background: linear-gradient(135deg, #ff003c, #ff4d6d);
--webkit-background-clip: text;
--webkit-text-fill-color: transparent;
-}
-
-.tag{
-padding:8px 16px;
-background:rgba(255,255,255,.08);
-border-radius:100px;
-font-size:13px;
-}
-
-.video-box{
-position:relative;
-width:100%;
-background:#000;
-border-radius:22px;
-overflow:hidden;
-min-height:240px;
-max-height:70vh;
-display:flex;
-justify-content:center;
-align-items:center;
-box-shadow:0 15px 35px rgba(0,0,0,.5);
-cursor:pointer;
-}
-
-video{
-width:100%;
-height:auto;
-max-height:70vh;
-display:block;
-object-fit:contain;
-}
-
-.custom-controls{
-display:flex;
-flex-direction:column;
-gap:12px;
-margin-top:15px;
-padding:16px 20px;
-background:rgba(255, 255, 255, 0.04);
-backdrop-filter:blur(20px);
--webkit-backdrop-filter:blur(20px);
-border:1px solid rgba(255, 255, 255, 0.08);
-border-radius:20px;
-box-shadow:0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-.controls-row{
-display:flex;
-align-items:center;
-gap:15px;
-width:100%;
-}
-
-.ctrl-btn{
-background:none;
-border:none;
-color:#fff;
-font-size:16px;
-cursor:pointer;
-padding:8px;
-border-radius:12px;
-display:flex;
-align-items:center;
-justify-content:center;
-transition:all 0.2s ease;
-flex-shrink:0;
-}
-
-.ctrl-btn svg{
-width:20px;
-height:20px;
-fill:currentColor;
-}
-
-.ctrl-btn:hover{
-background:rgba(255, 255, 255, 0.12);
-color:#ff003c;
-transform:scale(1.08);
-}
-
-.seek-container{
-width:100%;
-display:flex;
-align-items:center;
-padding: 5px 0;
-cursor: pointer;
-}
-
-.seek-bar{
--webkit-appearance:none;
-width:100%;
-height:8px;
-background: rgba(255, 255, 255, 0.2);
-border-radius:10px;
-outline:none;
-cursor:pointer;
-transition: height 0.15s ease;
-}
-
-.seek-bar:hover{
-height:10px;
-}
-
-.seek-bar::-webkit-slider-thumb{
--webkit-appearance:none;
-width:16px;
-height:16px;
-border-radius:50%;
-background:#ff003c;
-cursor:pointer;
-box-shadow: 0 0 10px rgba(255,0,60,0.8);
-transition: transform 0.1s;
-}
-
-.seek-bar::-webkit-slider-thumb:hover{
-transform: scale(1.3);
-}
-
-.time-display{
-font-size:13px;
-opacity:0.85;
-white-space:nowrap;
-font-variant-numeric:tabular-nums;
-}
-
-.right-controls{
-display:flex;
-align-items:center;
-gap:12px;
-margin-left:auto;
-}
-
-.volume-wrapper{
-display:flex;
-align-items:center;
-gap:8px;
-}
-
-.volume-slider{
--webkit-appearance:none;
-width:70px;
-height:5px;
-background:rgba(255,255,255,0.2);
-border-radius:10px;
-accent-color:#ff003c;
-cursor:pointer;
-}
-
-.footer{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-top:15px;
-gap:15px;
-flex-wrap:wrap;
-}
-
-.filename{
-font-size:14px;
-opacity:.8;
-overflow:hidden;
-text-overflow:ellipsis;
-white-space:nowrap;
-max-width:45%;
-}
-
-input[type="file"]{
-display:none;
-}
-
-.footer-buttons {
-display: flex;
-gap: 10px;
-align-items: center;
-}
-
-.btn{
-padding:11px 18px;
-background:linear-gradient(135deg,#ff003c,#b30026);
-border-radius:14px;
-cursor:pointer;
-font-weight:700;
-font-size:13px;
-transition:.25s;
-box-shadow:0 8px 20px rgba(255,0,60,.35);
-display:inline-flex;
-align-items:center;
-gap:8px;
-border: none;
-color: #fff;
-}
-
-.btn svg {
-width: 16px;
-height: 16px;
-fill: currentColor;
-}
-
-.btn:hover{
-transform:scale(1.05);
-}
-
-.stealth-btn {
-background: rgba(255, 255, 255, 0.08);
-border: 1px solid rgba(255, 255, 255, 0.15);
-box-shadow: none;
-}
-
-.stealth-btn:hover {
-background: rgba(255, 255, 255, 0.15);
-}
-
-.credits-footer {
-position: relative;
-z-index: 1;
-margin-top: 15px;
-text-align: center;
-font-size: 12px;
-opacity: 0.6;
-letter-spacing: 0.5px;
-}
-
-#stealthOverlay {
-display: none;
-position: fixed;
-top: 0;
-left: 0;
-width: 100vw;
-height: 100vh;
-background: radial-gradient(circle at top, #1a1a2e 0%, #0f0f1a 100%);
-color: #fff;
-z-index: 9999;
-padding: 20px;
-overflow-y: auto;
-}
-
-.stealth-container {
-max-width: 900px;
-margin: 40px auto;
-background: rgba(255, 255, 255, 0.05);
-backdrop-filter: blur(30px);
--webkit-backdrop-filter: blur(30px);
-border: 1px solid rgba(255, 255, 255, 0.1);
-border-radius: 24px;
-padding: 25px;
-box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-}
-
-.excel-header {
-font-size: 16px;
-font-weight: bold;
-margin-bottom: 20px;
-color: #00ff88;
-border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-padding-bottom: 12px;
-display: flex;
-justify-content: space-between;
-align-items: center;
-flex-wrap: wrap;
-gap: 10px;
-}
-
-.table-responsive {
-width: 100%;
-overflow-x: auto;
--webkit-overflow-scrolling: touch;
-border-radius: 12px;
-margin-bottom: 20px;
-}
-
-.excel-table {
-width: 100%;
-border-collapse: collapse;
-font-size: 13px;
-min-width: 600px;
-}
-
-.excel-table th, .excel-table td {
-border: 1px solid rgba(255, 255, 255, 0.08);
-padding: 12px 15px;
-text-align: left;
-white-space: nowrap;
-}
-
-.excel-table th {
-background-color: rgba(255, 255, 255, 0.08);
-font-weight: bold;
-color: #00ff88;
-}
-
-.excel-table td {
-color: rgba(255, 255, 255, 0.85);
-}
-
-.submit-report-btn {
-display: block;
-width: 100%;
-padding: 14px;
-background: rgba(0, 255, 136, 0.15);
-backdrop-filter: blur(15px);
--webkit-backdrop-filter: blur(15px);
-border: 1px solid rgba(0, 255, 136, 0.4);
-border-radius: 14px;
-color: #00ff88;
-font-size: 15px;
-font-weight: 700;
-text-align: center;
-cursor: pointer;
-transition: all 0.25s ease;
-box-shadow: 0 8px 25px rgba(0, 255, 136, 0.15);
-}
-
-.submit-report-btn:hover {
-background: rgba(0, 255, 136, 0.25);
-border-color: rgba(0, 255, 136, 0.7);
-transform: translateY(-2px);
-box-shadow: 0 12px 30px rgba(0, 255, 136, 0.3);
+/* 📱 🖥️ RESPONSIVE MASTER AUTO ADJUSTMENT QUERIES */
+@media (max-width: 768px) {
+    body { padding: 8px; }
+    .top-bar-container { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 12px; }
+    .url-box { border-radius: 12px; padding: 5px; }
+    .url-box input { padding: 10px 12px; font-size: 12px; }
+    .url-box button { padding: 0 14px; font-size: 12px; }
+    .ambient-toggle-box { padding: 10px 14px; border-radius: 12px; width: 100%; justify-content: space-between; }
+    .tv-frame { border-radius: 12px; }
+    .controls { padding: 30px 12px 12px 12px; }
+    .controls-center { gap: 12px; }
+    .btn { width: 30px; height: 30px; }
+    #playBtn { width: 34px; height: 34px; }
+    .video-wrap.portrait { max-height: 70vh; }
 }
 </style>
 </head>
-
 <body>
 
-<div class="bottom-glow"></div>
+<canvas id="ambilight-canvas"></canvas>
 
-<div id="stealthOverlay">
-  <div class="stealth-container">
-    <div class="excel-header">
-      <span>📊 Annual_Project_Report_2026_Final.xlsx</span>
-      <span style="font-size:11px; color:rgba(255,255,255,0.6); font-weight:normal;">Press 'Esc' to close</span>
-    </div>
-    
-    <div class="table-responsive">
-      <table class="excel-table">
-        <tr>
-          <th>ID</th>
-          <th>Project Module</th>
-          <th>Status</th>
-          <th>Budget Allocated</th>
-          <th>Completion Rate</th>
-        </tr>
-        <tr>
-          <td>101</td>
-          <td>Database Architecture Optimization</td>
-          <td>Completed</td>
-          <td>$45,000</td>
-          <td>100%</td>
-        </tr>
-        <tr>
-          <td>102</td>
-          <td>Cloud Infrastructure Migration</td>
-          <td>In Progress</td>
-          <td>$82,500</td>
-          <td>74%</td>
-        </tr>
-        <tr>
-          <td>103</td>
-          <td>Security Compliance Audit</td>
-          <td>Pending Review</td>
-          <td>$15,000</td>
-          <td>30%</td>
-        </tr>
-        <tr>
-          <td>104</td>
-          <td>User Interface Redesign & Testing</td>
-          <td>In Progress</td>
-          <td>$34,200</td>
-          <td>88%</td>
-        </tr>
-      </table>
+<div class="player-container">
+    <div class="top-bar-container">
+        <div class="url-box">
+            <input id="url" placeholder="Paste MP4 link OR YouTube Watch link..." value="">
+            <button onclick="loadVideo()">Stream Studio</button>
+        </div>
+        
+        <div class="ambient-toggle-box" id="ambientTogglePanel">
+            <span>Ambient Mode ⋆‧°𓏲ּ𝄢</span>
+            <label class="switch">
+                <input type="checkbox" id="ambientSwitch" checked onchange="toggleAmbientEngine()">
+                <span class="slider"></span>
+            </label>
+        </div>
     </div>
 
-    <button class="submit-report-btn" id="submitReportBtn"> Submit Report & Return to Player</button>
-  </div>
-</div>
+    <div class="tv-frame" id="mainContainer">
+        <div class="video-wrap landscape" id="videoWrap">
+            
+            <iframe id="ytPlayer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
-<div class="card">
+            <div class="lock-btn" id="lockBtn" onclick="toggleLock()">
+                <svg id="lockIcon" viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2 v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6-5c1.66 0 3 1.34 3 3v2H9V6c0-1.66 1.34-3 3-3z"/></svg>
+            </div>
 
-<div class="header">
-<div class="logo-container">
-<div class="spider-web-logo">
-<svg viewBox="0 0 100 100">
-  <line x1="50" y1="50" x2="50" y2="5" />
-  <line x1="50" y1="50" x2="95" y2="25" />
-  <line x1="50" y1="50" x2="95" y2="75" />
-  <line x1="50" y1="50" x2="50" y2="95" />
-  <line x1="50" y1="50" x2="5" y2="75" />
-  <line x1="50" y1="50" x2="5" y2="25" />
-  <line x1="50" y1="50" x2="80" y2="5" />
-  <line x1="50" y1="50" x2="20" y2="5" />
-  <path d="M 50 20 Q 62 20 72 32 Q 77 42 80 50 Q 77 58 72 68 Q 62 80 50 80 Q 38 80 28 68 Q 23 58 20 50 Q 23 42 28 32 Q 38 20 50 20 Z" />
-  <path d="M 50 35 Q 56 35 62 42 Q 65 47 67 50 Q 65 53 62 58 Q 56 65 50 65 Q 44 65 38 58 Q 35 53 33 50 Q 35 47 38 42 Q 44 35 50 35 Z" />
-  <circle cx="50" cy="50" r="3" fill="#ff003c" stroke="none"/>
-</svg>
-</div>
-<div class="logo">NETFLY</div>
-</div>
-<div class="tag">Yūgen (幽玄) </div>
-</div>
+            <div class="interaction-layer" id="interactionGrid">
+                <div class="zone side-zone" id="leftZone"></div>
+                <div class="zone center-zone" id="centerZone"></div>
+                <div class="zone side-zone" id="rightZone"></div>
+            </div>
 
-<div class="video-box" id="videoContainer">
-<video id="player" playsinline preload="metadata"></video>
-</div>
+            <div class="spinner-container" id="loadingSpinner"><div class="spinner"></div></div>
+            <div id="toast" class="toast"></div>
 
-<div class="custom-controls" id="controlsBar" style="display:none;">
+            <video id="player" playsinline preload="auto"></video>
 
-<div class="seek-container">
-<input type="range" class="seek-bar" id="seekBar" value="0" min="0" max="100" step="0.1">
-</div>
+            <div id="controls" class="controls">
+                <div class="progress-container">
+                    <input type="range" id="seek" class="seek" value="0" min="0" step="0.1">
+                </div>
+                <div class="row">
+                    <div id="time" class="time">00:00 / 00:00</div>
+                    
+                    <div class="controls-center">
+                        <button class="btn" onclick="backward()">
+                            <svg viewBox="0 0 24 24"><path d="M12 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
+                        </button>
+                        <button class="btn" id="playBtn" onclick="togglePlay()">
+                            <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </button>
+                        <button class="btn" onclick="forward()">
+                            <svg viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+                        </button>
+                    </div>
 
-<div class="controls-row">
-<button class="ctrl-btn" id="playPauseBtn" title="Play/Pause">
-<svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-</button>
-
-<div class="time-display" id="timeDisplay">00:00 / 00:00</div>
-
-<div class="right-controls">
-<div class="volume-wrapper">
-<button class="ctrl-btn" id="muteBtn" title="Mute">
-<svg id="volumeIcon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-</button>
-<input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1">
-</div>
-
-<button class="ctrl-btn" id="fullscreenBtn" title="Fullscreen">
-<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-</button>
-</div>
-
-</div>
-</div>
-
-<div class="footer">
-<div class="filename" id="name">No video selected</div>
-<div class="footer-buttons">
-<button class="btn stealth-btn" id="stealthBtn" title="Stealth Mode">
-  <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-  Stealth
-</button>
-<label class="btn" for="pick">
-  <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
-  Choose Video
-</label>
-<input type="file" id="pick" accept="video/*">
-</div>
-</div>
-
-</div>
-
-<div class="credits-footer">
-  Made with love ♥️ | All rights reserved Upto 2030
+                    <div class="right-controls-group">
+                        <button class="btn" id="zoomBtn" onclick="toggleZoomFill()" title="Zoom to Fill">
+                            <svg viewBox="0 0 24 24"><path d="M15 3h6v6h-2V5h-4V3zM9 3H3v6h2V5h4V3zm6 18h6v-6h-2v4h-4v2zm-6 0H3v-6h2v4h4v2z"/></svg>
+                        </button>
+                        
+                        <div class="speed-badge" id="speedBtn" onclick="changeSpeed()">1.0x</div>
+                        <button class="btn full" onclick="goFull()">
+                            <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-const pick = document.getElementById("pick");
-const player = document.getElementById("player");
-const name = document.getElementById("name");
-const playPauseBtn = document.getElementById("playPauseBtn");
-const playIcon = document.getElementById("playIcon");
-const seekBar = document.getElementById("seekBar");
-const timeDisplay = document.getElementById("timeDisplay");
-const fullscreenBtn = document.getElementById("fullscreenBtn");
-const controlsBar = document.getElementById("controlsBar");
-const muteBtn = document.getElementById("muteBtn");
-const volumeSlider = document.getElementById("volumeSlider");
-const videoContainer = document.getElementById("videoContainer");
-const stealthBtn = document.getElementById("stealthBtn");
-const stealthOverlay = document.getElementById("stealthOverlay");
-const submitReportBtn = document.getElementById("submitReportBtn");
+const player = document.getElementById('player');
+const ytPlayer = document.getElementById('ytPlayer');
+const seek = document.getElementById('seek');
+const controls = document.getElementById('controls');
+const playIcon = document.getElementById('playIcon');
+const mainContainer = document.getElementById('mainContainer');
+const videoWrap = document.getElementById('videoWrap');
+const canvas = document.getElementById('ambilight-canvas');
+const spinner = document.getElementById('loadingSpinner');
+const lockBtn = document.getElementById('lockBtn');
+const ambientSwitch = document.getElementById('ambientSwitch');
+const interactionGrid = document.getElementById('interactionGrid');
+const ambientTogglePanel = document.getElementById('ambientTogglePanel');
+const ctx = canvas.getContext('2d');
+let hideTimer, ambilightId, isLocked = false, ambientEnabled = true, isYouTubeMode = false, isZoomed = false;
 
-let isSeeking = false;
-let wasPlayingBeforeStealth = false;
+const playPath = '<path d="M8 5v14l11-7z"/>';
+const pausePath = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+const speeds = [1.0, 1.25, 1.5, 2.0, 0.5];
+let currentSpeedIdx = 0;
 
-// 1. URL Query Parameter se stream link fetch karne ka logic
-const urlParams = new URLSearchParams(window.location.search);
-const videoStreamUrl = urlParams.get('url');
+function getYouTubeId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
 
-if (videoStreamUrl) {
-    player.src = videoStreamUrl;
-    player.load();
-    name.textContent = "Stream from Bot";
-    controlsBar.style.display = "flex";
+function loadVideo(){
+ const urlInput = document.getElementById('url').value.trim();
+ if(!urlInput) return;
+ const ytId = getYouTubeId(urlInput);
+ 
+ if(ytId) {
+     isYouTubeMode = true; player.pause(); player.style.display = 'none';
+     controls.style.display = 'none'; interactionGrid.style.display = 'none';
+     lockBtn.style.display = 'none'; canvas.style.opacity = '0';
+     ambientTogglePanel.style.opacity = '0.3'; cancelAnimationFrame(ambilightId);
+     ytPlayer.src = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`;
+     ytPlayer.style.display = 'block'; showToast("YouTube Mode");
+     
+     videoWrap.className = "video-wrap landscape";
+     mainContainer.style.maxWidth = "100%";
+ } else {
+     isYouTubeMode = false; ytPlayer.src = ''; ytPlayer.style.display = 'none';
+     player.style.display = 'block'; controls.style.display = 'flex';
+     interactionGrid.style.display = 'flex'; lockBtn.style.display = 'flex';
+     ambientTogglePanel.style.opacity = '1'; spinner.style.display = 'block';
+     
+     player.removeAttribute('crossorigin'); 
+     player.src = urlInput; 
+     player.load();
+     player.play().catch(e => {
+         console.log("Autoplay blocked, muting...", e);
+         player.muted = true;
+         player.play();
+     });
+     showControlsInstant(); playIcon.innerHTML = pausePath;
+ }
+}
+
+function toggleAmbientEngine() {
+    if(isYouTubeMode) return;
+    ambientEnabled = ambientSwitch.checked;
+    if (!ambientEnabled) {
+        canvas.style.opacity = "0"; cancelAnimationFrame(ambilightId); showToast("Glow Off");
+    } else {
+        if (!player.paused && !player.ended) { canvas.style.opacity = "0.65"; renderAmbilight(); }
+        showToast("Glow On");
+    }
+}
+
+function toggleLock() {
+    if(isYouTubeMode) return;
+    isLocked = !isLocked;
+    if(isLocked) {
+        lockBtn.classList.add('locked'); controls.classList.add('hide');
+        lockBtn.innerHTML = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>';
+        showToast('Screen Locked');
+    } else {
+        lockBtn.classList.remove('locked');
+        lockBtn.innerHTML = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2 v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6-5c1.66 0 3 1.34 3 3v2H9V6c0-1.66 1.34-3 3-3z"/></svg>';
+        showToast('Screen Unlocked'); showControlsInstant();
+    }
+}
+
+function changeSpeed() {
+    if(isLocked || isYouTubeMode) return;
+    currentSpeedIdx = (currentSpeedIdx + 1) % speeds.length;
+    const currentSpeed = speeds[currentSpeedIdx];
+    player.playbackRate = currentSpeed;
+    document.getElementById('speedBtn').innerText = currentSpeed + 'x';
+    showToast(`Speed: ${currentSpeed}x`);
+}
+
+function toggleZoomFill() {
+    if(isLocked || isYouTubeMode) return;
+    isZoomed = !isZoomed;
+    const zoomBtn = document.getElementById('zoomBtn');
     
-    player.muted = false;
-    player.volume = 1;
-    volumeSlider.value = 1;
-
-    player.oncanplay = () => {
-        let playPromise = player.play();
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
-                updatePlayButton(true);
-            }).catch(error => {
-                player.muted = true;
-                player.play().then(() => {
-                    player.muted = false;
-                    updatePlayButton(true);
-                });
-            });
-        }
-    };
+    if(isZoomed) {
+        player.classList.add('zoom-fill');
+        zoomBtn.style.color = 'var(--accent)';
+        showToast("Zoom to Fill: ON");
+    } else {
+        player.classList.remove('zoom-fill');
+        zoomBtn.style.color = 'rgba(255, 255, 255, 0.7)';
+        showToast("Zoom to Fill: OFF");
+    }
+    showControlsInstant();
 }
-
-pick.addEventListener("change", function(){
-const file = this.files[0];
-if(!file) return;
-
-const url = URL.createObjectURL(file);
-player.src = url;
-player.load();
-name.textContent = file.name;
-controlsBar.style.display = "flex";
-
-player.muted = false;
-player.volume = 1;
-volumeSlider.value = 1;
-
-player.oncanplay = () => {
-let playPromise = player.play();
-if (playPromise !== undefined) {
-playPromise.then(() => {
-updatePlayButton(true);
-}).catch(error => {
-player.muted = true;
-player.play().then(() => {
-player.muted = false;
-updatePlayButton(true);
-});
-});
-}
-};
-});
-
-playPauseBtn.addEventListener("click", togglePlay);
-player.addEventListener("click", togglePlay);
 
 function togglePlay(){
-if(player.paused){
-player.play();
-updatePlayButton(true);
-} else {
-player.pause();
-updatePlayButton(false);
-}
+ if(isLocked || isYouTubeMode) return;
+ if(player.paused){ player.play(); playIcon.innerHTML = pausePath; } 
+ else { player.pause(); playIcon.innerHTML = playPath; }
+ showControlsInstant();
 }
 
-function updatePlayButton(isPlaying){
-if(isPlaying){
-playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-} else {
-playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-}
+function forward(){ if(isLocked || isYouTubeMode) return; player.currentTime += 10; showToast('↺ 10s'); showControlsInstant(); }
+function backward(){ if(isLocked || isYouTubeMode) return; player.currentTime -= 10; showToast('↻ 10s'); showControlsInstant(); }
+
+function goFull(){
+ if(isLocked) return;
+ if (!document.fullscreenElement) mainContainer.requestFullscreen().catch(err => console.log(err.message));
+ else document.exitFullscreen();
 }
 
-function updateSeekBarBackground(value){
-seekBar.style.background = `linear-gradient(to right, #ff003c ${value}%, rgba(255, 255, 255, 0.2) ${value}%)`;
+function showToast(text){
+ const el = document.getElementById('toast'); el.innerText = text; el.classList.add('show');
+ clearTimeout(el.timer); el.timer = setTimeout(() => el.classList.remove('show'), 500);
 }
 
-player.addEventListener("timeupdate", () => {
-if(!isSeeking && !isNaN(player.duration)){
-const val = (player.currentTime / player.duration) * 100;
-seekBar.value = val;
-updateSeekBarBackground(val);
+function fmt(seconds){
+ seconds = Math.floor(seconds || 0);
+ const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+ const s = String(seconds % 60).padStart(2, '0');
+ return `${m}:${s}`;
 }
-if(!isNaN(player.duration)){
-timeDisplay.textContent = `${formatTime(player.currentTime)} / ${formatTime(player.duration)}`;
+
+function updateProgressBarLook() {
+    const value = (seek.value / seek.max) * 100;
+    seek.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${value}%, rgba(255, 255, 255, 0.2) ${value}%, rgba(255, 255, 255, 0.2) 100%)`;
 }
+
+function renderAmbilight() {
+    if (!ambientEnabled || isYouTubeMode) return;
+    if (!player.paused && !player.ended) {
+        try {
+            ctx.drawImage(player, 0, 0, canvas.width, canvas.height);
+        } catch(e) {}
+    }
+    ambilightId = requestAnimationFrame(renderAmbilight);
+}
+
+player.addEventListener('waiting', () => { if(!isYouTubeMode) spinner.style.display = 'block'; });
+player.addEventListener('playing', () => { spinner.style.display = 'none'; });
+player.addEventListener('canplay', () => { spinner.style.display = 'none'; });
+
+player.addEventListener('play', () => {
+    if (ambientEnabled && !isYouTubeMode) { canvas.style.opacity = "0.65"; renderAmbilight(); }
+    document.body.classList.add('theater-active');
+});
+player.addEventListener('pause', () => { 
+    cancelAnimationFrame(ambilightId); document.body.classList.remove('theater-active');
 });
 
-seekBar.addEventListener("input", () => {
-isSeeking = true;
-updateSeekBarBackground(seekBar.value);
-if(!isNaN(player.duration)){
-const time = (seekBar.value / 100) * player.duration;
-timeDisplay.textContent = `${formatTime(time)} / ${formatTime(player.duration)}`;
-}
+player.addEventListener('loadedmetadata', () => {
+    seek.max = player.duration || 0; 
+    
+    if(player.videoHeight > player.videoWidth) {
+        videoWrap.className = "video-wrap portrait";
+        mainContainer.style.maxWidth = "420px";
+        canvas.width = 27; canvas.height = 48;
+    } else {
+        videoWrap.className = "video-wrap landscape";
+        mainContainer.style.maxWidth = "100%";
+        canvas.width = 48; canvas.height = 27;
+    }
+    
+    updateProgressBarLook(); 
+    spinner.style.display = 'none';
 });
 
-seekBar.addEventListener("change", () => {
-if(!isNaN(player.duration)){
-player.currentTime = (seekBar.value / 100) * player.duration;
-}
-isSeeking = false;
+player.addEventListener('timeupdate', () => {
+ if(!seek.matches(':focus')) { seek.value = player.currentTime; updateProgressBarLook(); }
+ document.getElementById('time').textContent = `${fmt(player.currentTime)} / ${fmt(player.duration)}`;
 });
 
-volumeSlider.addEventListener("input", (e) => {
-player.volume = e.target.value;
-player.muted = (player.volume === 0);
+seek.addEventListener('input', () => { 
+    if(isLocked || isYouTubeMode) return;
+    player.currentTime = seek.value; updateProgressBarLook(); showControlsInstant(); 
 });
 
-muteBtn.addEventListener("click", () => {
-if(player.muted){
-player.muted = false;
-volumeSlider.value = player.volume > 0 ? player.volume : 1;
-player.volume = volumeSlider.value;
-} else {
-player.muted = true;
-volumeSlider.value = 0;
+function showControlsInstant(){
+ if(isLocked || isYouTubeMode) return;
+ controls.classList.remove('hide'); clearTimeout(hideTimer);
+ if(!player.paused) hideTimer = setTimeout(() => controls.classList.add('hide'), 4000); 
 }
+
+function hideControlsInstant() { if(!player.paused) controls.classList.add('hide'); }
+
+mainContainer.addEventListener('mousemove', showControlsInstant);
+mainContainer.addEventListener('mouseleave', hideControlsInstant);
+
+function configureZone(zoneId, doubleTapAction, isCenter = false) {
+ const el = document.getElementById(zoneId);
+ let lastClick = 0, timer = null;
+
+ el.addEventListener('click', (e) => {
+ e.preventDefault();
+ if(isLocked || isYouTubeMode) return;
+ 
+ const current = Date.now();
+ if(current - lastClick < 250) { 
+     if (timer) clearTimeout(timer); 
+     doubleTapAction(); 
+ } 
+ else { 
+     timer = setTimeout(() => {
+         if (controls.classList.contains('hide')) { 
+             showControlsInstant(); 
+         } else { 
+             hideControlsInstant(); 
+         }
+     }, 2000); 
+ }
+ lastClick = current;
+ });
+}
+
+configureZone('leftZone', backward); 
+configureZone('centerZone', togglePlay, true); 
+configureZone('rightZone', forward);
+
+document.addEventListener('keydown', (e) => {
+ if(document.activeElement.tagName === 'INPUT' || isLocked || isYouTubeMode) return;
+ if(e.key === ' ') { e.preventDefault(); togglePlay(); }
+ if(e.key === 'ArrowRight') { e.preventDefault(); forward(); }
+ if(e.key === 'ArrowLeft') { e.preventDefault(); backward(); }
+ if(e.key.toLowerCase() === 'f') { e.preventDefault(); goFull(); }
 });
 
-fullscreenBtn.addEventListener("click", () => {
-if(!document.fullscreenElement){
-videoContainer.requestFullscreen().catch(()=>{});
-} else {
-document.exitFullscreen();
-}
-});
-
-function toggleStealthMode() {
-if (stealthOverlay.style.display === "block") {
-stealthOverlay.style.display = "none";
-if (wasPlayingBeforeStealth && player.paused) {
-player.play();
-updatePlayButton(true);
-}
-} else {
-wasPlayingBeforeStealth = !player.paused;
-player.pause();
-updatePlayButton(false);
-stealthOverlay.style.display = "block";
-}
-}
-
-stealthBtn.addEventListener("click", toggleStealthMode);
-submitReportBtn.addEventListener("click", toggleStealthMode);
-
-let lastTapTime = 0;
-videoContainer.addEventListener("click", (e) => {
-const currentTime = Date.now();
-const tapLength = currentTime - lastTapTime;
-if (tapLength < 300 && tapLength > 0) {
-const rect = videoContainer.getBoundingClientRect();
-const clickX = e.clientX - rect.left;
-if (clickX < rect.width / 2) {
-player.currentTime = Math.max(0, player.currentTime - 10);
-} else {
-player.currentTime = Math.min(player.duration, player.currentTime + 10);
-}
-}
-lastTapTime = currentTime;
-});
-
-document.addEventListener("keydown", (e) => {
-if(e.code === "Escape" && stealthOverlay.style.display === "block"){
-toggleStealthMode();
-return;
-}
-if(controlsBar.style.display === "none") return;
-if(e.code === "Space"){
-e.preventDefault();
-togglePlay();
-} else if(e.code === "KeyF"){
-fullscreenBtn.click();
-} else if(e.code === "ArrowRight"){
-player.currentTime = Math.min(player.duration, player.currentTime + 5);
-} else if(e.code === "ArrowLeft"){
-player.currentTime = Math.max(0, player.currentTime - 5);
-}
-});
-
-function formatTime(seconds){
-const minutes = Math.floor(seconds / 60);
-const secs = Math.floor(seconds % 60);
-return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
-}
+// Auto-fetch stream link from URL query parameter (?url=...)
+window.onload = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramUrl = urlParams.get('url');
+    if (paramUrl) {
+        document.getElementById('url').value = decodeURIComponent(paramUrl);
+    }
+    loadVideo();
+};
 </script>
-
 </body>
 </html>
