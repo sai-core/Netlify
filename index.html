@@ -73,6 +73,29 @@ body.theater-active { background: #000001; }
     align-items: center;
 }
 
+/* 🛠️ FIX: Fullscreen mode me video aur controls ko perfectly fit rakhne ke liye */
+.player-container:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+    padding: 0;
+}
+
+.player-container:fullscreen .tv-frame {
+    max-width: 100% !important;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+}
+
+.player-container:fullscreen .top-bar-container {
+    display: none; /* Fullscreen me input box gayab ho jayega */
+}
+
 .url-box {
     flex: 1;
     display: flex;
@@ -159,6 +182,12 @@ input:checked + .slider:before { transform: translateX(18px); }
 .video-wrap.landscape { aspect-ratio: 16/9; }
 .video-wrap.portrait { aspect-ratio: 9/16; max-height: 80vh; }
 
+/* Fullscreen me height automatic match hone ke liye */
+.player-container:fullscreen .video-wrap {
+    height: 100%;
+    width: 100%;
+}
+
 video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; }
 /* Zoom to Fill configuration */
 video.zoom-fill { object-fit: cover !important; }
@@ -204,7 +233,7 @@ iframe { position: absolute; top:0; left:0; width: 100%; height: 100%; border: n
 .time { color: rgba(255, 255, 255, 0.5); font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .right-controls-group { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .speed-badge { background: rgba(255,255,255,0.08); color: #ccc; font-size: 10px; font-weight: 600; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-.speed-badge:hover { background: rgba(255,255,255,2); color: #fff; }
+.speed-badge:hover { background: rgba(255,255,255,0.2); color: #fff; }
 
 .lock-btn {
     position: absolute; top: 12px; left: 12px; z-index: 8; background: rgba(10,10,12,0.6); backdrop-filter: blur(8px);
@@ -338,9 +367,9 @@ function getYouTubeId(url) {
 }
 
 function loadVideo(){
- const urlInput = document.getElementById('url').value.trim();
- if(!urlInput) return;
- const ytId = getYouTubeId(urlInput);
+ const url = document.getElementById('url').value.trim();
+ if(!url) return;
+ const ytId = getYouTubeId(url);
  
  if(ytId) {
      isYouTubeMode = true; player.pause(); player.style.display = 'none';
@@ -359,13 +388,9 @@ function loadVideo(){
      ambientTogglePanel.style.opacity = '1'; spinner.style.display = 'block';
      
      player.removeAttribute('crossorigin'); 
-     player.src = urlInput; 
+     player.src = url; 
      player.load();
-     player.play().catch(e => {
-         console.log("Autoplay blocked, muting...", e);
-         player.muted = true;
-         player.play();
-     });
+     player.play().catch(e => console.log("Playing."));
      showControlsInstant(); playIcon.innerHTML = pausePath;
  }
 }
@@ -433,8 +458,12 @@ function backward(){ if(isLocked || isYouTubeMode) return; player.currentTime -=
 
 function goFull(){
  if(isLocked) return;
- if (!document.fullscreenElement) mainContainer.requestFullscreen().catch(err => console.log(err.message));
- else document.exitFullscreen();
+ const elem = document.querySelector('.player-container');
+ if (!document.fullscreenElement) {
+     elem.requestFullscreen().catch(err => console.log(err.message));
+ } else {
+     document.exitFullscreen();
+ }
 }
 
 function showToast(text){
@@ -552,21 +581,15 @@ document.addEventListener('keydown', (e) => {
  if(e.key.toLowerCase() === 'f') { e.preventDefault(); goFull(); }
 });
 
-// Auto-fetch stream link from URL query parameter (?url=...)
+// 🚀 Auto-capture URL passed from Telegram WebApp query parameter & trigger play
 window.onload = () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const paramUrl = urlParams.get('url');
-    if (paramUrl) {
-        // decodeURIComponent secure tarike se poori link ko wapas le aayega bina kate
-        const decodedUrl = decodeURIComponent(paramUrl);
-        document.getElementById('url').value = decodedUrl;
-        
-        setTimeout(() => {
-            loadVideo();
-        }, 300);
+    const videoUrl = urlParams.get('url');
+    if (videoUrl) {
+        document.getElementById('url').value = decodeURIComponent(videoUrl);
+        loadVideo();
     }
 };
-
 </script>
 </body>
 </html>
