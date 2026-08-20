@@ -29,14 +29,13 @@ body {
     justify-content: center;
     align-items: center;
     padding: 12px;
-    overflow-x: hidden; /* Stops horizontal scrolling entirely */
+    overflow-x: hidden;
     position: relative;
     transition: background 0.4s ease;
 }
 
 body.theater-active { background: #000001; }
 
-/* Top Bar is strictly STATIC - No dimming, No camouflage */
 .top-bar-container { 
     opacity: 1 !important; 
     display: flex;
@@ -47,7 +46,6 @@ body.theater-active { background: #000001; }
     width: 100%;
 }
 
-/* Constrained Responsive Ambilight Canvas */
 #ambilight-canvas {
     position: absolute;
     width: 100%;
@@ -62,7 +60,6 @@ body.theater-active { background: #000001; }
     transition: opacity 0.4s ease;
 }
 
-/* Master Responsive Fluid Wrapper Container */
 .player-container {
     width: 100%;
     max-width: 1050px;
@@ -73,7 +70,6 @@ body.theater-active { background: #000001; }
     align-items: center;
 }
 
-/* 🛠️ FIX: Fullscreen mode me video aur controls ko perfectly fit rakhne ke liye */
 .player-container:fullscreen {
     width: 100vw;
     height: 100vh;
@@ -93,7 +89,7 @@ body.theater-active { background: #000001; }
 }
 
 .player-container:fullscreen .top-bar-container {
-    display: none; /* Fullscreen me input box gayab ho jayega */
+    display: none;
 }
 
 .url-box {
@@ -135,7 +131,6 @@ body.theater-active { background: #000001; }
 }
 .url-box button:hover { background: #ff2332; transform: translateY(-1px); }
 
-/* Adaptive Premium Glass Ambient Light Switch Box */
 .ambient-toggle-box {
     display: flex;
     align-items: center;
@@ -160,7 +155,6 @@ body.theater-active { background: #000001; }
 input:checked + .slider { background-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
 input:checked + .slider:before { transform: translateX(18px); }
 
-/* Cinema Canvas Aspect Frame */
 .tv-frame {
     position: relative;
     border-radius: 16px;
@@ -172,7 +166,6 @@ input:checked + .slider:before { transform: translateX(18px); }
     transition: max-width 0.4s ease;
 }
 
-/* Dynamic Aspect Ratio Classes */
 .video-wrap { 
     position: relative; 
     width: 100%; 
@@ -182,14 +175,12 @@ input:checked + .slider:before { transform: translateX(18px); }
 .video-wrap.landscape { aspect-ratio: 16/9; }
 .video-wrap.portrait { aspect-ratio: 9/16; max-height: 80vh; }
 
-/* Fullscreen me height automatic match hone ke liye */
 .player-container:fullscreen .video-wrap {
     height: 100%;
     width: 100%;
 }
 
 video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; }
-/* Zoom to Fill configuration */
 video.zoom-fill { object-fit: cover !important; }
 
 iframe { position: absolute; top:0; left:0; width: 100%; height: 100%; border: none; display: none; z-index: 4; }
@@ -203,7 +194,6 @@ iframe { position: absolute; top:0; left:0; width: 100%; height: 100%; border: n
 .spinner { width: 44px; height: 44px; border: 4px solid rgba(255, 5, 22, 0.1); border-left-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* Intelligent Bottom Control Bar Controls overlay Dashboard */
 .controls {
     position: absolute; left: 0; bottom: 0; width: 100%;
     padding: 40px 16px 16px 16px;
@@ -246,7 +236,6 @@ iframe { position: absolute; top:0; left:0; width: 100%; height: 100%; border: n
 }
 .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 
-/* 📱 🖥️ RESPONSIVE MASTER AUTO ADJUSTMENT QUERIES */
 @media (max-width: 768px) {
     body { padding: 8px; }
     .top-bar-container { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 12px; }
@@ -367,32 +356,60 @@ function getYouTubeId(url) {
 }
 
 function loadVideo(){
- const url = document.getElementById('url').value.trim();
- if(!url) return;
- const ytId = getYouTubeId(url);
- 
- if(ytId) {
-     isYouTubeMode = true; player.pause(); player.style.display = 'none';
-     controls.style.display = 'none'; interactionGrid.style.display = 'none';
-     lockBtn.style.display = 'none'; canvas.style.opacity = '0';
-     ambientTogglePanel.style.opacity = '0.3'; cancelAnimationFrame(ambilightId);
-     ytPlayer.src = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`;
-     ytPlayer.style.display = 'block'; showToast("YouTube Mode");
-     
-     videoWrap.className = "video-wrap landscape";
-     mainContainer.style.maxWidth = "100%";
- } else {
-     isYouTubeMode = false; ytPlayer.src = ''; ytPlayer.style.display = 'none';
-     player.style.display = 'block'; controls.style.display = 'flex';
-     interactionGrid.style.display = 'flex'; lockBtn.style.display = 'flex';
-     ambientTogglePanel.style.opacity = '1'; spinner.style.display = 'block';
-     
-     player.removeAttribute('crossorigin'); 
-     player.src = url; 
-     player.load();
-     player.play().catch(e => console.log("Playing."));
-     showControlsInstant(); playIcon.innerHTML = pausePath;
- }
+    const urlInput = document.getElementById('url');
+    if(!urlInput) return;
+    
+    const url = urlInput.value.trim();
+    if(!url) return;
+    
+    const ytId = getYouTubeId(url);
+    
+    if(ytId) {
+        isYouTubeMode = true; 
+        player.pause(); 
+        player.style.display = 'none';
+        controls.style.display = 'none'; 
+        interactionGrid.style.display = 'none';
+        lockBtn.style.display = 'none'; 
+        canvas.style.opacity = '0';
+        ambientTogglePanel.style.opacity = '0.3'; 
+        cancelAnimationFrame(ambilightId);
+        ytPlayer.src = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`;
+        ytPlayer.style.display = 'block'; 
+        showToast("YouTube Mode");
+        
+        videoWrap.className = "video-wrap landscape";
+        mainContainer.style.maxWidth = "100%";
+    } else {
+        isYouTubeMode = false; 
+        ytPlayer.src = ''; 
+        ytPlayer.style.display = 'none';
+        player.style.display = 'block'; 
+        controls.style.display = 'flex';
+        interactionGrid.style.display = 'flex'; 
+        lockBtn.style.display = 'flex';
+        ambientTogglePanel.style.opacity = '1'; 
+        spinner.style.display = 'block';
+        
+        player.removeAttribute('src');
+        player.load();
+        
+        player.src = url;
+        player.load();
+        
+        const playPromise = player.play();
+        if (playPromise !== undefined) {
+            playPromise.then(_ => {
+                playIcon.innerHTML = pausePath;
+                spinner.style.display = 'none';
+                showControlsInstant();
+            }).catch(error => {
+                spinner.style.display = 'none';
+                playIcon.innerHTML = playPath;
+                showToast("Tap Play to Start");
+            });
+        }
+    }
 }
 
 function toggleAmbientEngine() {
@@ -437,11 +454,11 @@ function toggleZoomFill() {
     if(isZoomed) {
         player.classList.add('zoom-fill');
         zoomBtn.style.color = 'var(--accent)';
-        showToast("Zoom to Fill: ON");
+        showToast("Zoom: ON");
     } else {
         player.classList.remove('zoom-fill');
         zoomBtn.style.color = 'rgba(255, 255, 255, 0.7)';
-        showToast("Zoom to Fill: OFF");
+        showToast("Zoom: OFF");
     }
     showControlsInstant();
 }
@@ -486,9 +503,7 @@ function updateProgressBarLook() {
 function renderAmbilight() {
     if (!ambientEnabled || isYouTubeMode) return;
     if (!player.paused && !player.ended) {
-        try {
-            ctx.drawImage(player, 0, 0, canvas.width, canvas.height);
-        } catch(e) {}
+        try { ctx.drawImage(player, 0, 0, canvas.width, canvas.height); } catch(e) {}
     }
     ambilightId = requestAnimationFrame(renderAmbilight);
 }
@@ -507,7 +522,6 @@ player.addEventListener('pause', () => {
 
 player.addEventListener('loadedmetadata', () => {
     seek.max = player.duration || 0; 
-    
     if(player.videoHeight > player.videoWidth) {
         videoWrap.className = "video-wrap portrait";
         mainContainer.style.maxWidth = "420px";
@@ -517,7 +531,6 @@ player.addEventListener('loadedmetadata', () => {
         mainContainer.style.maxWidth = "100%";
         canvas.width = 48; canvas.height = 27;
     }
-    
     updateProgressBarLook(); 
     spinner.style.display = 'none';
 });
@@ -543,34 +556,29 @@ function hideControlsInstant() { if(!player.paused) controls.classList.add('hide
 mainContainer.addEventListener('mousemove', showControlsInstant);
 mainContainer.addEventListener('mouseleave', hideControlsInstant);
 
-function configureZone(zoneId, doubleTapAction, isCenter = false) {
+function configureZone(zoneId, doubleTapAction) {
  const el = document.getElementById(zoneId);
  let lastClick = 0, timer = null;
 
  el.addEventListener('click', (e) => {
- e.preventDefault();
- if(isLocked || isYouTubeMode) return;
- 
- const current = Date.now();
- if(current - lastClick < 250) { 
-     if (timer) clearTimeout(timer); 
-     doubleTapAction(); 
- } 
- else { 
-     timer = setTimeout(() => {
-         if (controls.classList.contains('hide')) { 
-             showControlsInstant(); 
-         } else { 
-             hideControlsInstant(); 
-         }
-     }, 2000); 
- }
- lastClick = current;
+     e.preventDefault();
+     if(isLocked || isYouTubeMode) return;
+     const current = Date.now();
+     if(current - lastClick < 250) { 
+         if (timer) clearTimeout(timer); 
+         doubleTapAction(); 
+     } else { 
+         timer = setTimeout(() => {
+             if (controls.classList.contains('hide')) { showControlsInstant(); } 
+             else { hideControlsInstant(); }
+         }, 2000); 
+     }
+     lastClick = current;
  });
 }
 
 configureZone('leftZone', backward); 
-configureZone('centerZone', togglePlay, true); 
+configureZone('centerZone', togglePlay); 
 configureZone('rightZone', forward);
 
 document.addEventListener('keydown', (e) => {
@@ -581,35 +589,25 @@ document.addEventListener('keydown', (e) => {
  if(e.key.toLowerCase() === 'f') { e.preventDefault(); goFull(); }
 });
 
-// 🚀 Auto-capture URL passed from Telegram WebApp query parameter & safely trigger play
+// 🚀 Robust URL capture to prevent link truncation or breaking completely
 window.onload = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const videoUrl = urlParams.get('url');
-    if (videoUrl) {
-        const decodedUrl = decodeURIComponent(videoUrl);
-        document.getElementById('url').value = decodedUrl;
-        
-        // Direct load and attempt play with user-gesture fallback
-        player.src = decodedUrl;
-        player.load();
-        
-        const playPromise = player.play();
-        if (playPromise !== undefined) {
-            playPromise.then(_ => {
-                // Autoplay started successfully!
-                playIcon.innerHTML = pausePath;
-                showControlsInstant();
-            }).catch(error => {
-                // Autoplay was prevented by browser security, show play button state
-                console.log("Autoplay blocked, waiting for user tap.");
-                playIcon.innerHTML = playPath;
-                spinner.style.display = 'none';
-                showToast("Tap screen or play button to start");
-            });
+    try {
+        const fullParams = window.location.search;
+        if (fullParams.includes('url=')) {
+            const urlStartIndex = fullParams.indexOf('url=') + 4;
+            const rawUrl = fullParams.substring(urlStartIndex);
+            const decodedUrl = decodeURIComponent(rawUrl);
+            
+            document.getElementById('url').value = decodedUrl;
+            
+            setTimeout(() => {
+                loadVideo();
+            }, 500);
         }
+    } catch (err) {
+        console.log("Error parsing link:", err);
     }
 };
-
 </script>
 </body>
 </html>
