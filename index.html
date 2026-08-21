@@ -538,8 +538,8 @@ function togglePlay(){
  showControlsInstant();
 }
 
-function forward(){ if(isLocked || isYouTubeMode) return; player.currentTime += 10; showToast('↺ 10s'); showControlsInstant(); }
-function backward(){ if(isLocked || isYouTubeMode) return; player.currentTime -= 10; showToast('↻ 10s'); showControlsInstant(); }
+function forward(){ if(isLocked || isYouTubeMode) return; player.currentTime += 10; showToast('↺ 10s');}
+function backward(){ if(isLocked || isYouTubeMode) return; player.currentTime -= 10; showToast('↻ 10s');}
 
 function goFull(){
  if(isLocked) return;
